@@ -5,23 +5,28 @@ module PFD(
     input d2,
     input clk1,
     input clk2,
-    input rst,
     
-    output reg q1,
+    output reg up,
     output wire q1_n,
-    output reg q2,
-    output wire q2_n,
-    output wire pfd
+    output reg dn,
+    output wire q2_n
     );
-assign q1_n = ~q1;
-assign q2_n = ~q2;   
-assign pfd = q1 & q2;
+assign q1_n = ~up;
+assign q2_n = ~dn;   
+assign rst = up & dn;
 
 always @(posedge clk1 or posedge rst) begin
     if (rst)
-        q1 <= 0;
+        up <= 0;
     else
-        q1 <= d1;
+        up <= d1;
+end
+
+always @(posedge clk2 or posedge rst) begin
+    if (rst)
+        dn <= 0;
+    else
+        dn <= d2;
 end
     
 endmodule
