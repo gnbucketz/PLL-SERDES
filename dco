@@ -1,0 +1,23 @@
+`timescale 1ns / 1ps
+
+
+module DCO(
+input [7:0] speed_var, clk, rst, [23:0] mod,
+output reg signal_out
+    );
+
+reg [23:0] accum = 0;
+wire [23:0] step_speed = {16'd0, speed_var}; //extend 8 bit speed_var to 24 bit
+
+always @(posedge clk or posedge rst) begin
+    if (rst) begin
+        accum <=0;
+        signal_out <=0;
+    end else begin
+        accum <= accum + step_speed;
+    end
+    end
+ 
+    
+    
+endmodule
