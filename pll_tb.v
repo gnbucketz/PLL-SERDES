@@ -20,6 +20,15 @@ LoopFilter dut2(
 .speed_var(speed_var),
 .rst(rst)
 );
+
+DCO dut3(
+.clk(clk),
+.speed_var(speed_var),
+.mod(mod),
+.rst(rst),
+.signal_out(signal_out)
+);
+
 initial clk = 0;
 always #10 clk = ~clk;
 
