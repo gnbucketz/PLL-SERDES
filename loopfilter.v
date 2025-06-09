@@ -2,7 +2,7 @@
 
 module LoopFilter(
     input up, dn, rst, clk,
-    output reg [7:0] speed_var
+    output reg [23:0] speed_var
     );
 
 always @ (posedge clk or posedge rst) begin
