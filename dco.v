@@ -8,10 +8,10 @@ input [bit_count-1:0] speed_var,
 input [bit_count-1:0] mod,
 input clk, 
 input rst, 
-output reg signal_out
-    );
+output reg signal_out,
+output reg [bit_count-1:0] accum
 
-reg [bit_count-1:0] accum;
+    );
 
 always @(posedge clk or posedge rst) begin
     if (rst) begin
