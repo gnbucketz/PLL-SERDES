@@ -1,13 +1,14 @@
 `timescale 1ns / 1ps
 
 module Frequency_Divider#(
-parameter n = 1
+parameter n = 1,
 //1 = divide 2, 2 = divide 4, 3 = divide by 8
+parameter bit_count = 8
 )(
 input clk, input rst,
 output reg f_qn
     );
-reg [7:0] counter;
+reg [bit_count-1:0] counter;
 
 always @(posedge clk or rst) begin
     if (rst) begin
