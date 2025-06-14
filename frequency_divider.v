@@ -2,11 +2,21 @@
 
 module Frequency_Divider#(
 parameter n = 1
-//1 d FF = divide 2, 2 d FF = divide 4, 3 d FF = divide by 8
+//1 = divide 2, 2 = divide 4, 3 = divide by 8
 )(
-input clk, input rst, input d1, input d2, input d3, input qn1, input qn2, input qn3, output reg q1, output reg q2, output reg q3
-
-   
-   
+input clk, input rst,
+output reg f_qn
     );
+reg [7:0] counter;
+
+always @(posedge clk or rst) begin
+    if (rst) begin
+        f_qn <= 0;
+        counter <= 0;
+    end else if (counter == 2** (n+1)) begin
+        counter <= 0;
+        f_qn = ~f_qn;    
+    end else 
+        counter <= counter + 1;
+    end
 endmodule
