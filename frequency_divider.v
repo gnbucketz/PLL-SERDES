@@ -13,7 +13,7 @@ module Frequency_Divider #(
     if (rst) begin
       f_qn  <= 1'b0;
       count <= 0;
-    end else if (count == HALF-1) begin
+    end else if (count == HALF-1) begin //8/2= 4, 4-1 = 3, after 3rd waveform itll flip
       count <= 0;
       f_qn  <= ~f_qn;
     end else begin
