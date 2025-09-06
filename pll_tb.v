@@ -1,94 +1,58 @@
-`timescale 1ns / 1ps
-
+`timescale 1ns/1ps
 module pll_tb;
 
-reg d1, d2, clk, rst;
-reg [23:0] mod;  
-wire up, dn;
-wire [23:0] speed_var;
-wire [23:0] accum;
-wire signal_out;
-wire f_qn;
-wire [23:0] counter;
+  reg clk, rst;
+  reg d1;
+  real ref_half_ns;
 
-// Instantiate Phase Frequency Detector
-PFD dut(
-    .d1(d1),
-    .d2(d2),
-    .clk(clk),
-    .up(up),
-    .dn(dn)
-);
+  wire up, dn;
+  wire [23:0] speed_var, accum;
+  wire signal_out, f_qn;
 
-// Instantiate Loop Filter
-LoopFilter dut2(
-    .clk(clk),
-    .up(up),
-    .dn(dn),
-    .speed_var(speed_var),
-    .rst(rst)
-);
+  PFD u_pfd (.ref(d1), .fb(f_qn), .arst(rst), .up(up), .dn(dn));
 
-// Instantiate Digitally Controlled Oscillator
-DCO #(
-    .bit_count(24),
-    .min_value(0)
-) dut3 (
-    .clk(clk),
-    .speed_var(speed_var),
-    .mod(mod),
-    .rst(rst),
-    .signal_out(signal_out),
-    .accum(accum)
-);
+  LoopFilter u_lf (.up(up), .dn(dn), .rst(rst), .clk(clk), .speed_var(speed_var));
 
-// Instantiate Frequency Divider to generate f_qn from DCO output
-Frequency_Divider #(
-    .n(1),
-    .bit_count(8)
-) divider (
-    .clk(signal_out),
-    .rst(rst),
-    .f_qn(f_qn)
-);
-    // === System Clock ===
-    initial clk = 0;
-    always #5 clk = ~clk;  // 100 MHz
+  DCO u_dco (.speed_var(speed_var), .mod(24'd16777215),  // must be 2^24-1
+             .clk(clk), .rst(rst), .signal_out(signal_out), .accum(accum));
 
-    // === Reference Clock d1 ===
-    initial begin
-        d1 = 0;
-        forever begin
-            #40 d1 = ~d1;  // Period = 80ns (12.5 MHz), 50% duty
-        end
-    end
+  Frequency_Divider u_div (.clk(signal_out), .rst(rst), .f_qn(f_qn));
 
-    // === Delayed Clock d2 ===
-    initial begin
-        d2 = 0;
-        forever begin
-            #50 d2 = ~d2;  // Same period, but 10ns delayed vs d1
-        end
-    end
+  initial clk = 1'b0;
+  always #5 clk = ~clk;
 
-    // === Test Control ===
-    initial begin
-        rst = 1;
-        mod = 24'd100000;
-        #100;
+  initial begin
+    d1 = 1'b0;
+    ref_half_ns = 40.0;            // 80 ns period = 12.5 MHz
+    forever #(ref_half_ns) d1 = ~d1;
+  end
 
-        rst = 0;
+  initial begin
+    rst = 1'b1;
+    #200;
+    rst = 1'b0;
 
-        #2000;  // Let the simulation run
-        $finish;
-    end
+    #2_000_000;    // 2 ms
+    $finish;
+  end
 
-    // === Monitor ===
-    initial begin
-        $display("Time\tD1\tD2\tUP\tDN\tSpeedVar\tSignal_Out");
-        $monitor("%0t\t%b\t%b\t%b\t%b\t%d\t%b",
-                 $time, d1, d2, up, dn, speed_var, signal_out);
-    end
+  real t_ref0=0,t_ref1=0,Tref=0;
+  real t_fb0=0,t_fb1=0,Tfb=0;
+  real phase_ns;
 
+  always @(posedge d1)   begin t_ref0=t_ref1; t_ref1=$realtime; if(t_ref0>0) Tref=t_ref1-t_ref0; end
+  always @(posedge f_qn) begin t_fb0 =t_fb1;  t_fb1 =$realtime; if(t_fb0 >0) Tfb =t_fb1 -t_fb0; end
+
+  initial begin
+    @(negedge rst);
+    #5000; 
+    phase_ns = (t_fb1 - t_ref1);
+    $display("Tref=%.3f ns  Tfb=%.3f ns  phase=%.3f ns  %s",
+             Tref, Tfb, phase_ns,
+             (Tref>0 && Tfb>0 &&
+              ((Tfb>Tref?Tfb-Tref:Tref-Tfb) <= 0.02*Tref) &&
+              (phase_ns <= 0.05*Tref) && (phase_ns >= -0.05*Tref))
+             ? "MATCH (lock-like)" : "MISMATCH");
+  end
 
 endmodule
