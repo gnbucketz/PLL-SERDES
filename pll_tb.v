@@ -36,6 +36,12 @@ module pll_tb;
     $finish;
   end
 
+//t_ref0, t_ref1: store the times of the last two rising edges of the reference clock d1
+//t_ref = time between the tref1 and tref0
+//t_fb0, t_fb1 store the times of the last two rising edges of the feedback clock f_qn
+//T_fb: the measured period of f_qn (t_fb1 - t_fb0)
+//phase_ns: time difference between the most recent feedback edge and the most recent reference edge
+
   real t_ref0=0,t_ref1=0,Tref=0;
   real t_fb0=0,t_fb1=0,Tfb=0;
   real phase_ns;
@@ -47,12 +53,6 @@ module pll_tb;
     @(negedge rst);
     #5000; 
     phase_ns = (t_fb1 - t_ref1);
-    $display("Tref=%.3f ns  Tfb=%.3f ns  phase=%.3f ns  %s",
-             Tref, Tfb, phase_ns,
-             (Tref>0 && Tfb>0 &&
-              ((Tfb>Tref?Tfb-Tref:Tref-Tfb) <= 0.02*Tref) &&
-              (phase_ns <= 0.05*Tref) && (phase_ns >= -0.05*Tref))
-             ? "MATCH (lock-like)" : "MISMATCH");
   end
 
 endmodule
