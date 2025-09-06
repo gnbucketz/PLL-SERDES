@@ -1,20 +1,26 @@
-`timescale 1ns / 1ps
+`timescale 1ns/1ps
+module PFD (
+  input  wire ref,     
+  input  wire fb,      
+  input  wire arst,   
+  output wire up,
+  output wire dn
+);
+  reg q_ref, q_fb;
 
-module PFD(
- input d1, d2, clk,
- output reg up, dn,
- output wire rst
- );
- 
- assign rst = up & dn;
- 
-always @ (posedge clk or posedge rst) begin
-    if (rst) begin
-        up <= 0;
-        dn <= 0;
-    end else begin
-        up <= d1;
-        dn <= d2;
-end
-end
+  wire rst_both = q_ref & q_fb;
+  wire rst_int  = rst_both | arst;   
+
+  always @(posedge ref or posedge rst_int) begin
+    if (rst_int) q_ref <= 1'b0;
+    else         q_ref <= 1'b1;   
+  end
+
+  always @(posedge fb  or posedge rst_int) begin
+    if (rst_int) q_fb <= 1'b0;
+    else         q_fb <= 1'b1;    
+  end
+
+  assign up = q_ref;
+  assign dn = q_fb;
 endmodule
