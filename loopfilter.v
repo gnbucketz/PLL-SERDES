@@ -22,17 +22,14 @@ always @ (posedge clk or posedge rst) begin
         dn_s2 <= dn_s1;
         end
     end
-    
-    wire up_pulse =  up_s1 & ~up_s2; 
-    wire dn_pulse =  dn_s1 & ~dn_s2;
 
   always @(posedge clk or posedge rst) begin
     if (rst) begin
       speed_var <= default_speed;
     end else begin
-      if (up_pulse & ~dn_pulse) begin
+      if (up_s2 & ~dn_s2) begin
         speed_var <= (speed_var < max_speed) ? (speed_var + 1'b1) : max_speed; //read as if speed_var < max_speed +1 if not set as max_speed
-      end else if (dn_pulse & ~up_pulse) begin
+      end else if (dn_s2 & ~up_s2) begin
         speed_var <= (speed_var > min_speed) ? (speed_var - 1'b1) : min_speed; //read as if speed_var ? max_speed -1 if not set as min_speed
       end
     end
