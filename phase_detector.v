@@ -7,13 +7,13 @@ module PFD (
     output reg up,
     output reg dn
 );
-    wire rst = ext_rst | up & dn;
+    assign rst = ext_rst | (up & dn);
      
     always @(posedge rst or posedge ref) begin
         if (rst) begin
             up <= 1'b0;
         end else begin
-            up = 1'b1;
+            up <= 1'b1;
         end
     end
     
@@ -21,7 +21,10 @@ module PFD (
         if (rst) begin
             dn <= 1'b0;
         end else begin
-            dn = 1'b1;
+            dn <= 1'b1;
         end 
-    end   
+    end
+    
+    assign up_pulse = up & ~dn;
+    assign dn_pulse = dn & ~up;
 endmodule
