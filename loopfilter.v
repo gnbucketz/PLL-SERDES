@@ -2,36 +2,40 @@
 
 module LoopFilter#(
     parameter bit_count = 24,
-    parameter default_speed = 8388608,
-    parameter max_speed = 16777215,
-    parameter min_speed = 0
+    parameter [bit_count-1:0] default_speed = 24'd8388608,
+    parameter [bit_count-1:0] max_speed = 24'd16777215,
+    parameter [bit_count-1:0] min_speed = 24'd0,
+    parameter [bit_count-1:0] step = 24'd1
 )(
-    input up, dn, rst, clk,
-    output reg [bit_count-1:0] speed_var
-    );
-
-reg up_s1, up_s2, dn_s1, dn_s2;
-always @ (posedge clk or posedge rst) begin
-    if (rst) begin
-        up_s1 <= 0; up_s2 <= 0;
-        dn_s1 <= 0; dn_s2 <= 0;
-    end else begin 
-        up_s1 <= up;   //synches with pfd
-        up_s2 <= up_s1; //takes previous value of up_s1
-        dn_s1 <= dn;
-        dn_s2 <= dn_s1;
+    input wire ext_rst,
+    input wire up_pulse,
+    input wire dn_pulse,
+    input wire sys_clk,
+    output reg [bit_count-1:0] speed_var  
+);
+    wire rst = ext_rst;
+    always @(posedge rst or posedge sys_clk) begin
+        if (rst) begin
+            speed_var <= default_speed;
+        end else begin
+            case ({up_pulse, dn_pulse}) 
+                2'b00: begin
+                    speed_var <= default_speed;
+                end 
+                2'b11: begin
+                    speed_var <= default_speed;
+                end
+                2'b10: begin
+                    if (speed_var < max_speed) begin
+                        speed_var <= speed_var + step;
+                    end
+                end
+                2'b01: begin
+                    if (speed_var > min_speed) begin
+                        speed_var <= speed_var - step;
+                    end            
+                end
+            endcase
         end
     end
-
-  always @(posedge clk or posedge rst) begin
-    if (rst) begin
-      speed_var <= default_speed;
-    end else begin
-      if (up_s2 & ~dn_s2) begin
-        speed_var <= (speed_var < max_speed) ? (speed_var + 1'b1) : max_speed; //read as if speed_var < max_speed +1 if not set as max_speed
-      end else if (dn_s2 & ~up_s2) begin
-        speed_var <= (speed_var > min_speed) ? (speed_var - 1'b1) : min_speed; //read as if speed_var ? max_speed -1 if not set as min_speed
-      end
-    end
-  end
-endmodule 
+    endmodule
