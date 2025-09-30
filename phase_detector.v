@@ -7,7 +7,7 @@ module PFD (
     output reg up,
     output reg dn
 );
-    assign rst = ext_rst | (up & dn);
+    wire rst = ext_rst | (up & dn);
      
     always @(posedge rst or posedge ref) begin
         if (rst) begin
